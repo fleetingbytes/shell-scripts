@@ -1,0 +1,55 @@
+get_repo_names_urls_and_ssh_urls() {
+    gh repo list --limit $MAX_REPOS --json "name,url,sshUrl" --template '{{ range . }}{{ .name }} {{ .url }} {{ .sshUrl }}{{ "\n" }}{{ end }}'
+}
+
+add_deployment_key_to_gh_repo() {
+    local repo_name=$1
+    local key_file_name=$repo_name
+    local git_user_name=$(git config get user.name)
+    local public_key_file="${DEPLOYMENT_KEYS_DIR}/${key_file_name}.pub"
+    gh repo deploy-key add --repo "${git_user_name}/${repo_name}" --allow-write --title "Deployment key for ${repo_name} from dotfiles" "$public_key_file" 2> /dev/null
+}
+
+get_git_user_name() {
+    printf "$(git config get user.name)"
+}
+
+get_key_ids_and_public_keys_of_gh_repo() {
+    local repo_name=$1
+    gh repo deploy-key list --repo "${git_user_name}/${repo_name}" --json "id,key" --template '{{ range . }}{{ printf "%.0f" .id }} {{ .key }}{{ "\n" }}{{ end }}' 
+}
+
+get_key_id() {
+    local repo_name=$1
+    local key_file_name=$repo_name
+    local git_user_name="$(get_git_user_name)"
+    local public_key_file="${DEPLOYMENT_KEYS_DIR}/${key_file_name}.pub"
+    local public_part_from_file=$(awk '{print $2}' "$public_key_file")
+    printf "%s" $(get_key_ids_and_public_keys_of_gh_repo "$repo_name" | grep --fixed-strings "$public_part_from_file" | awk '{print $1}')
+}
+
+remove_key_id_from_repo() {
+    local key_id=$1
+    local repo_name=$2
+    local git_user_name="$(get_git_user_name)"
+    gh repo deploy-key delete --repo "${git_user_name}/${repo_name}" "$key_id"
+}
+
+remove_deployment_key_from_github() {
+    local key_file_name=$1
+    local key_id=$(get_key_id "$key_file_name")
+    if [ "$key_id" ]; then
+        local repo_name=$key_file_name
+        remove_key_id_from_repo "$key_id" "$repo_name"
+    fi
+}
+
+remove_all_local_deployment_keys_from_github() {
+    list_names_of_local_deployment_keys | while read key_name; do
+        local key_id=$(get_key_id "$key_name")
+        local repo_name=$key_name
+        if [ "$key_id" ]; then
+            remove_key_id_from_repo "$key_id" "$repo_name"
+        fi
+    done
+}
