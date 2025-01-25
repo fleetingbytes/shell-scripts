@@ -1,6 +1,6 @@
 add_deployment_key_to_dotfiles() {
     local private_key_file="${DEPLOYMENT_KEYS_DIR}/$1"
     local public_key_file="${private_key_file}.pub"
-    chezmoi add --encrypt "$private_key_file"
+    chezmoi add "$private_key_file" --encrypt 
     chezmoi add "$public_key_file"
 }
