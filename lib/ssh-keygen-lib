@@ -15,5 +15,5 @@ remove_all_local_github_deployment_keys() {
 }
 
 list_names_of_local_deployment_keys() {
-    find "$DEPLOYMENT_KEYS_DIR" ! -name "*.*" -type f -maxdepth 1 | xargs basename
+    find "$DEPLOYMENT_KEYS_DIR" -maxdepth 1 -type f ! -name "*.*" | xargs basename
 }
