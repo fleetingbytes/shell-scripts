@@ -52,18 +52,23 @@ show_help() {
 }
 
 starts_with_a_hyphen() {
-    [ "${1#-}" = "$1" ]
-}
-
-is_a_positional_argument() {
-    if starts_with_a_hyphen "$1"; then:
+    if [ "${1#-}" = "$1" ]; then
         return 1
     else
         return 0
+    fi
+}
+
+is_a_positional_argument() {
+    if starts_with_a_hyphen "$1"; then
+        return 1
+    else
+        return 0
+    fi
 }
 
 parse_optional_positional_argument() {
-    if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then
+    if [ $# -gt 0 ] && is_a_positional_argument "$1"; then
         printf "%s" $1
         return 0
     else
@@ -83,7 +88,7 @@ parse_cli() {
             d) echo "Option -d with value $OPTARG" ;;
             k) echo "Option -k with value $OPTARG" ;;
             p) echo "Option -p" ;;
-            h) echo "Option -h" ;;
+            h) show_help; exit 0 ;;
             \?) echo "Invalid option: -$OPTARG" >&2; show_help; exit 1 ;;
             :) echo "Option -$OPTARG requires an argument" >&2; exit 1 ;;
         esac
