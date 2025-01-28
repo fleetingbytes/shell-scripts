@@ -1,17 +1,38 @@
 #!/usr/bin/env sh
 
-script_name=$(basename $0 | rev | cut -d / -f 1 | rev)
+get_absolute_path_to_parent_dir_of_this_script() {
+    local absolute_path="$(readlink -f -- "$1")"
+    local parent_dir="$(dirname "$absolute_path")"
+    printf "$parent_dir"
+}
+
+SCRIPT_DIR="$(get_absolute_path_to_parent_dir_of_this_script "$0")"
+LIB_DIR="${SCRIPT_DIR}/lib"
+
+# source functions from libraries
+. "${LIB_DIR}/gh-lib"
+. "${LIB_DIR}/ssh-keygen-lib"
+. "${LIB_DIR}/ssh-add-lib"
+
+
+AGE_IDENTITY_KEYFILE=${SSH_DIR}/age_identity.key
+ENCRYPTED_KEEPASS_PASSWORD=${SSH_DIR}/keepass-password.age
+
 
 DEFAULT_KEEPASS_DB="$HOME/src/chazre/KeePassDB.kdbx"
-DEFAULT_DEPLOY_KEYS_DIR="$HOME/.ssh/github_deploy_keys"
-DEFAULT_PROJECT_DIR="."
+DEFAULT_DEPLOYMENT_KEYS_DIR="$HOME/.ssh/github_deploy_keys"
+DEFAULT_PROJECT_DIR=$(pwd)
+
+script_name=$(basename $0 | rev | cut -d / -f 1 | rev)
+
 
 help_text=$(cat << EOF
 NAME
     $script_name - Creates a remote repository and credentials
 
 SYNOPSIS
-    $script_name path [-d dir] [-k path] [FLAGS]
+    $script_name [dir] [-n string] [-d string] [-s dir]
+    [-k path] [FLAGS]
 
 DESCRIPTION
     Once you have manually initialized a git repository locally,
@@ -24,12 +45,19 @@ DESCRIPTION
     - add this deploy key to the deploy keys group in KeePass
     - add this deploy key to your chezmoi dotfiles
 
+ARGUMENTS
+    dir                    Path to the directory of the project.
+                           Defaults to the current working directory.
 OPTIONS
-    -d, --deploy-keys-dir  Specify the directory where to create the 
+    -n, --name             Set the name for the project.
+                           Default is the basename of the 'dir'
+                           argument.
+    -d, --description      Description of the project.
+    -s, --deploy-keys-dir  Specify the directory where to create the 
                            GitHub deploy keypair. Default is
-                           "$DEFAULT_DEPLOY_KEYS_DIR"
+                           "$DEFAULT_DEPLOYMENT_KEYS_DIR".
     -k, --keepass-db       Specify the path to the KeePass DB.
-                           Default is "$DEFAULT_KEEPASS_DB"
+                           Default is "$DEFAULT_KEEPASS_DB".
 
 FLAGS
     -p, --private          GitHub repository shall be private
@@ -61,24 +89,20 @@ help_option_used() {
 }
 
 starts_with_a_hyphen() {
-    if [ "${1#-}" = "$1" ]; then
-        return 1
-    else
-        return 0
-    fi
+    [ "${1#-}" != "$1" ]
 }
 
 is_a_positional_argument() {
-    if starts_with_a_hyphen "$1"; then
-        return 1
-    else
-        return 0
-    fi
+    ! starts_with_a_hyphen "$1"
+}
+
+evaluate_relative_project_dir() {
+    printf "%s" $(readlink -f -- "$1")
 }
 
 parse_optional_positional_argument() {
     if [ $# -gt 0 ] && is_a_positional_argument "$1"; then
-        printf "%s" $1
+        printf "%s" $(evaluate_relative_project_dir "$1")
         return 0
     else
         printf "$DEFAULT_PROJECT_DIR"
@@ -87,11 +111,12 @@ parse_optional_positional_argument() {
 }
 
 set_defaults() {
-    DEPLOY_KEYS_DIR=$DEFAULT_DEPLOY_KEYS_DIR
+    PROJECT_DESCRIPTION=""
+    DEPLOYMENT_KEYS_DIR=$DEFAULT_DEPLOYMENT_KEYS_DIR
     KEEPASS_DB=$DEFAULT_KEEPASS_DB
-    PRIVATE_GITHUB_REPOSITORY=0
-    PUSH_KEEPASS_DB=0
-    PUSH_CHEZMOI=0
+    PRIVATE_GITHUB_REPOSITORY=""
+    PUSH_KEEPASS_DB=""
+    PUSH_CHEZMOI=""
 }
 
 parse_cli() {
@@ -105,10 +130,13 @@ parse_cli() {
     if [ $user_specified_project_dir -eq 0 ]; then
         shift
     fi
+    PROJECT_NAME=$(basename $PROJECT_DIR)
 
-    while getopts ":d:k:pKCh-:" opt; do
+    while getopts ":n:d:s:k:pKCh-:" opt; do
         case $opt in
-            d) DEPLOY_KEYS_DIR=$OPTARG; echo "Option -d with value $DEPLOY_KEYS_DIR" ;;
+            n) PROJECT_NAME=$OPTARG; echo "Option -n with value $PROJECT_NAME";;
+            d) PROJECT_DESCRIPTION=$OPTARG; echo "Option -d with value $PROJECT_DESCRIPTION";;
+            s) DEPLOYMENT_KEYS_DIR=$OPTARG; echo "Option -s with value $DEPLOYMENT_KEYS_DIR" ;;
             k) KEEPASS_DB=$OPTARG; echo "Option -k with value $KEEPASS_DB" ;;
             p) echo "Option -p"; PRIVATE_GITHUB_REPOSITORY=1 ;;
             K) echo "Option -K"; PUSH_KEEPASS_DB=1 ;;
@@ -116,12 +144,20 @@ parse_cli() {
             h) show_help; exit 0 ;; # Redundant, but kept for completeness
             -)
                 case "${OPTARG}" in
+                    name=*)
+                        PROJECT_NAME="${OPTARG#*=}"
+                        echo "Long option --name with value $PROJECT_NAME"
+                        ;;
+                    description=*)
+                        PROJECT_DESCRIPTION="${OPTARG#*=}"
+                        echo "Long option --name with value $PROJECT_DESCRIPTION"
+                        ;;
                     deploy-key-dir=*)
-                        DEPLOY_KEYS_DIR=${OPTARG#*=}
-                        echo "Long option --deploy-key-dir with value $DEPLOY_KEYS_DIR"
+                        DEPLOYMENT_KEYS_DIR="${OPTARG#*=}"
+                        echo "Long option --deploy-key-dir with value $DEPLOYMENT_KEYS_DIR"
                         ;;
                     keepass-db=*)
-                        KEEPASS_DB=${OPTARG#*=}
+                        KEEPASS_DB="${OPTARG#*=}"
                         echo "Long option --keepass-db with value $KEEPASS_DB"
                         ;;
                     private)
@@ -150,9 +186,18 @@ parse_cli() {
 
 set_defaults
 parse_cli "$@"
-printf "project dir is \"%s\"\n" $PROJECT_DIR
-printf "deploy keys dir is \"%s\"\n" $DEPLOY_KEYS_DIR
-printf "keepass db is \"%s\"\n" $KEEPASS_DB
-printf "private is \"%s\"\n" $PRIVATE_GITHUB_REPOSITORY
-printf "push keepass db \"%s\"\n" $PUSH_KEEPASS_DB
-printf "push chezmoi \"%s\"\n" $PUSH_CHEZMOI
+
+repo_name="$PROJECT_NAME"
+
+create_remote_repository "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PRIVATE_GITHUB_REPOSITORY"
+IFS=" " read -r url ssh_url << EOF
+$(get_url_and_ssh_url "$repo_name")
+EOF
+
+set_remote_url "$PROJECT_DIR" "$url"
+
+create_keypair_for_deployment "$repo_name" "$ssh_url"
+
+add_deployment_key_to_gh_repo "$repo_name"
+
+add_deployment_key_to_ssh_agent "$repo_name"

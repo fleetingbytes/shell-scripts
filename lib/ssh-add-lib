@@ -1,0 +1,5 @@
+add_deployment_key_to_ssh_agent() {
+    local repo_name=$1
+    path_to_private_key="${DEPLOYMENT_KEYS_DIR}/$repo_name"
+    ssh-add "$path_to_private_key"
+}
