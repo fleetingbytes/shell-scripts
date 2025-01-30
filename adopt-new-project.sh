@@ -195,11 +195,9 @@ add_deployment_key_to_gh_repo "$repo_name"
 
 add_deployment_key_to_ssh_agent "$repo_name"
 
-set -e
 unlock | create_deployment_key_entry "$repo_name" "$url" "$ssh_url"
 [ $PUSH_KEEPASS_DB ] && add_commit_push "$KEEPASS_DB" "feat: add deployment keys for $repo_name"
 
 add_deployment_key_to_dotfiles $repo_name
 chezmoi_stage_deployment_key $repo_name
 [ $PUSH_CHEZMOI ] && chezmoi_commit_and_push
-set +e
