@@ -1,0 +1,16 @@
+add_commit_push() {
+    local changed_file=$1
+    local message=$2
+    local file_name=$(basename "$changed_file")
+    local directory=$(dirname "$changed_file")
+
+    printf "$YELLOW%s$NORMAL %s\n" "Staging" "$file_name"
+    git -C "$directory" add "$file_name"
+
+    printf "$YELLOW%s$NORMAL %s $CYAN%s$NORMAL\n" "Commiting" "$file_name" "$message"
+    git -C "$directory" commit --message="$message"
+
+    printf "$YELLOW%s$NORMAL %s\n" "Pushing" "$file_name"
+    git -C "$directory" push
+}
+

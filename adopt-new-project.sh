@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 get_absolute_path_to_parent_dir_of_this_script() {
-    local absolute_path="$(readlink -f -- "$1")"
+    local absolute_path="$(stat -f "%R" -- "$1")"
     local parent_dir="$(dirname "$absolute_path")"
     printf "$parent_dir"
 }
@@ -10,13 +10,19 @@ SCRIPT_DIR="$(get_absolute_path_to_parent_dir_of_this_script "$0")"
 LIB_DIR="${SCRIPT_DIR}/lib"
 
 # source functions from libraries
+. "${LIB_DIR}/chezmoi-lib"
 . "${LIB_DIR}/gh-lib"
-. "${LIB_DIR}/ssh-keygen-lib"
+. "${LIB_DIR}/git-lib"
+. "${LIB_DIR}/keepassxc-cli-lib"
+. "${LIB_DIR}/sh-lib"
 . "${LIB_DIR}/ssh-add-lib"
+. "${LIB_DIR}/ssh-keygen-lib"
 
 
+SSH_DIR=$HOME/.ssh
 AGE_IDENTITY_KEYFILE=${SSH_DIR}/age_identity.key
 ENCRYPTED_KEEPASS_PASSWORD=${SSH_DIR}/keepass-password.age
+DEPLOYMENT_KEYS_GROUP_PATH_IN_DB="/Home/SSH/GitHub Deploy Keys"
 
 
 DEFAULT_KEEPASS_DB="$HOME/src/chazre/KeePassDB.kdbx"
@@ -132,48 +138,33 @@ parse_cli() {
     fi
     PROJECT_NAME=$(basename $PROJECT_DIR)
 
-    while getopts ":n:d:s:k:pKCh-:" opt; do
+    while getopts ":n:d:s:k:pKC-:" opt; do
         case $opt in
-            n) PROJECT_NAME=$OPTARG; echo "Option -n with value $PROJECT_NAME";;
-            d) PROJECT_DESCRIPTION=$OPTARG; echo "Option -d with value $PROJECT_DESCRIPTION";;
-            s) DEPLOYMENT_KEYS_DIR=$OPTARG; echo "Option -s with value $DEPLOYMENT_KEYS_DIR" ;;
-            k) KEEPASS_DB=$OPTARG; echo "Option -k with value $KEEPASS_DB" ;;
-            p) echo "Option -p"; PRIVATE_GITHUB_REPOSITORY=1 ;;
-            K) echo "Option -K"; PUSH_KEEPASS_DB=1 ;;
-            C) echo "Option -C"; PUSH_CHEZMOI=1 ;;
-            h) show_help; exit 0 ;; # Redundant, but kept for completeness
+            n) PROJECT_NAME=$OPTARG ;;
+            d) PROJECT_DESCRIPTION=$OPTARG ;;
+            s) DEPLOYMENT_KEYS_DIR=$OPTARG ;;
+            k) KEEPASS_DB=$OPTARG ;;
+            p) PRIVATE_GITHUB_REPOSITORY=1 ;;
+            K) PUSH_KEEPASS_DB=1 ;;
+            C) PUSH_CHEZMOI=1 ;;
             -)
                 case "${OPTARG}" in
                     name=*)
-                        PROJECT_NAME="${OPTARG#*=}"
-                        echo "Long option --name with value $PROJECT_NAME"
-                        ;;
+                        PROJECT_NAME="${OPTARG#*=}" ;;
                     description=*)
-                        PROJECT_DESCRIPTION="${OPTARG#*=}"
-                        echo "Long option --name with value $PROJECT_DESCRIPTION"
-                        ;;
+                        PROJECT_DESCRIPTION="${OPTARG#*=}" ;;
                     deploy-key-dir=*)
-                        DEPLOYMENT_KEYS_DIR="${OPTARG#*=}"
-                        echo "Long option --deploy-key-dir with value $DEPLOYMENT_KEYS_DIR"
-                        ;;
+                        DEPLOYMENT_KEYS_DIR="${OPTARG#*=}" ;;
                     keepass-db=*)
-                        KEEPASS_DB="${OPTARG#*=}"
-                        echo "Long option --keepass-db with value $KEEPASS_DB"
-                        ;;
+                        KEEPASS_DB="${OPTARG#*=}" ;;
                     private)
-                        PRIVATE_GITHUB_REPOSITORY=1
-                        echo "Long option --private"
-                        ;;
+                        PRIVATE_GITHUB_REPOSITORY=1 ;;
                     push-keepass-db)
-                        PUSH_KEEPASS_DB=1
-                        echo "Long option --push-keepass-db"
-                        ;;
+                        PUSH_KEEPASS_DB=1 ;;
                     push-chezmoi)
-                        PUSH_CHEZMOI=1
-                        echo "Long option --push-chezmoi"
-                        ;;
+                        PUSH_CHEZMOI=1 ;;
                     *)
-                        echo "Unknown long option --${OPTARG}" >&2
+                        echo "Unknown option --${OPTARG}" >&2
                         exit 1
                         ;;
                 esac
@@ -184,20 +175,31 @@ parse_cli() {
     done
 }
 
+set_color_variables
+
 set_defaults
 parse_cli "$@"
 
 repo_name="$PROJECT_NAME"
 
 create_remote_repository "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PRIVATE_GITHUB_REPOSITORY"
-IFS=" " read -r url ssh_url << EOF
+IFS=" " read url ssh_url << EOF
 $(get_url_and_ssh_url "$repo_name")
 EOF
 
-set_remote_url "$PROJECT_DIR" "$url"
+add_remote_url "$PROJECT_DIR" "$ssh_url"
 
 create_keypair_for_deployment "$repo_name" "$ssh_url"
 
 add_deployment_key_to_gh_repo "$repo_name"
 
 add_deployment_key_to_ssh_agent "$repo_name"
+
+set -e
+unlock | create_deployment_key_entry "$repo_name" "$url" "$ssh_url"
+[ $PUSH_KEEPASS_DB ] && add_commit_push "$KEEPASS_DB" "feat: add deployment keys for $repo_name"
+
+add_deployment_key_to_dotfiles $repo_name
+chezmoi_stage_deployment_key $repo_name
+[ $PUSH_CHEZMOI ] && chezmoi_commit_and_push
+set +e

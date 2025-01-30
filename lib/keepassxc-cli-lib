@@ -7,7 +7,8 @@ add_deployment_key_entry_for_repo() {
     local url="$2"
     local ssh_url="$3"
     local entry_name="$repo_name"
-    unlock | keepassxc-cli add --quiet --url "$url" --notes "$ssh_url" "$KEEPASS_DB" "${DEPLOYMENT_KEYS_GROUP_PATH_IN_DB}/${entry_name}"
+    [ $QUIET_KEEPASS_CLI ] && local quiet="--quiet" || local quiet=""
+    unlock | keepassxc-cli add $quiet --url "$url" --notes "$ssh_url" "$KEEPASS_DB" "${DEPLOYMENT_KEYS_GROUP_PATH_IN_DB}/${entry_name}"
 }
 
 attach_deployment_keypair_for_repo() {
@@ -16,8 +17,9 @@ attach_deployment_keypair_for_repo() {
     local path_to_entry="${DEPLOYMENT_KEYS_GROUP_PATH_IN_DB}/${entry_name}" 
     local key_file_name="$repo_name"
     local file_names="${key_file_name} ${key_file_name}.pub"
+    [ $QUIET_KEEPASS_CLI ] && local quiet="--quiet" || local quiet=""
     for file_name in $file_names; do 
-        unlock | keepassxc-cli attachment-import --quiet "$KEEPASS_DB" "${path_to_entry}" "${file_name}" "${DEPLOYMENT_KEYS_DIR}/${file_name}"
+        unlock | keepassxc-cli attachment-import $quiet "$KEEPASS_DB" "${path_to_entry}" "${file_name}" "${DEPLOYMENT_KEYS_DIR}/${file_name}"
     done
 }
 

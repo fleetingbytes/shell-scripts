@@ -4,3 +4,24 @@ add_deployment_key_to_dotfiles() {
     chezmoi add --encrypt "$private_key_file"
     chezmoi add "$public_key_file"
 }
+
+chezmoi_stage_deployment_key() {
+    local private_key_file="${DEPLOYMENT_KEYS_DIR}/$1"
+    local public_key_file="${private_key_file}.pub"
+    local chezmoi_source_path=$(chezmoi source-path)
+    for file in "$private_key_file" "$public_key_file"; do
+        local absolute_path=$(chezmoi source-path "$file")
+        local relative_path="${absolute_path#$chezmoi_source_path/}"
+        printf "$YELLOW%s$NORMAL %s\n" "Staging" "$relative_path"
+        git -C "$chezmoi_source_path" add "$relative_path"
+    done
+}
+
+chezmoi_commit_and_push() {
+    local chezmoi_source_path=$(chezmoi source-path)
+    local message="$(chezmoi generate git-commit-message)"
+    printf "$YELLOW%s$NORMAL\n" "Comitting"
+    printf "$CYAN%s$NORMAL\n" "$message"
+    git -C "$chezmoi_source_path" commit -m "$message"
+    git -C "$chezmoi_source_path" push
+}

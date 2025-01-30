@@ -4,7 +4,7 @@ get_repo_names_urls_and_ssh_urls() {
 
 get_url_and_ssh_url() {
     local repo_name=$1
-    printf "$(gh repo list --jq ".[] | select(.name == \"$repo_name\") | [.url, .sshUrl] | join(\" \")" --json "url,sshUrl")"
+    printf "$(gh repo list --json "name,url,sshUrl" --jq ".[] | select(.name == \"$repo_name\") | [.url, .sshUrl] | join(\" \")")"
 }
 
 add_deployment_key_to_gh_repo() {
@@ -73,7 +73,7 @@ remote_url_for_origin_already_exists() {
     git -C "$project_dir" remote | grep -q origin
 }
 
-set_remote_url() {
+add_remote_url() {
     local project_dir=$1
     local remote_url=$2
     printf "Set remote URL ... "
