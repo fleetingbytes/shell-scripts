@@ -175,10 +175,22 @@ parse_cli() {
     done
 }
 
+exit_if_remote_has_changed() {
+    local repository
+    while read repository; do
+        if remote_has_changed "$repository"; then
+            printf "%s %s %s\n" "Detected changes in the" "$repository" "remote"
+            exit 1
+        fi
+    done
+}
+
 set_color_variables
 
 set_defaults
 parse_cli "$@"
+
+printf "%s\n" "$(dirname $KEEPASS_DB)" "$(chezmoi source-path)" | exit_if_remote_has_changed
 
 repo_name="$PROJECT_NAME"
 

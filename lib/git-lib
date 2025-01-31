@@ -14,3 +14,7 @@ add_commit_push() {
     git -C "$directory" push
 }
 
+remote_has_changed() {
+    local directory=$1
+    git -C "$directory" fetch --dry-run 2>&1 | grep -q "."
+}
