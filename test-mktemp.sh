@@ -9,7 +9,8 @@
 #
 # It produces a report file with each tested invocation and the corresponding
 # result. It deletes all the temp files created in the process. Even the report
-# file itself can be optionally deleted. (Use the '-d' option for this.)
+# file itself is deleted. Redirect the script output to a file if you want
+# a persistent record of the test run.
 
 INVOCATIONS=$(mktemp)
 START_OF_LABEL="‹"

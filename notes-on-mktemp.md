@@ -1,11 +1,22 @@
-# Exploratory Tests of mktemp and Understanding Its man Page
+# Exploratory Tests of mktemp and a Critical Review of Its Manual Page
+
+## Abstract
+
+This study explores the interplay between the *template* arguments and the *tmpdir* and *prefix* options of mktemp(1).
+It finds one particular invocation form where mktemp does not behave as described in the manual page.
+This may be due to a bug in the mktemp program or due to some missing information in the manual page.
+Further it suggests that there is much to be improved regarding the content and wording of the mktemp(1) manual page.
+The appendix is autor's reflection on the problems encountered when studying and understanding the mktemp manual page.
+
+
+## Introduction
 
 I find the man page on mktemp very difficult to read.
 It did not make clear to me what each option does and what the exact result in each
 invocation would be, especially when considering all the fallback scenarios.
 
-Having studied the mktemp(1) very carefully, I used mktemp in a few scripts
-and I was becoming suspicious that something is not quite the way it should be.
+After a careful study of mktemp(1) I used mktemp in a few scripts
+but I become suspicious that something is not quite the way it should be.
 In the end I felt compelled to write some test cases and a script running them to explore what mktemp and its
 -t and -p options actually do. Then I checked if the results are in accordance with the mktemp man
 page.
@@ -18,14 +29,15 @@ from somebody else's script.
 
 ## Tests
 
-I designed a set of test cases, where each test executes a particular
-invocation of mktemp and takes note of the paths of the created temporary
-files as mktemp reports them.
+I designed a set of exploratory test cases where each test is a particular
+invocation of mktemp and the result is the list of temporary files created this way.
 
 Each of my test cases either sets or unsets the
-*TMPDIR* environment variable before executing mktemp with 0 to 2 *template*s,
+*TMPDIR* environment variable before it executes mktemp with 0 to 2 *template*s,
 with or without a *-t prefix* option, and with or without a *-p tmpdir* option.
 
+Variables *TEST_TEMP_DIR* and *FALLBACK_DIR* in the table below represent paths to existing directories.
+Paths to the created temporary files in the result column are separated by space.
 
 | Test | Invocation                                                                   | Result                                                             |
 | ---- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------ |
@@ -50,10 +62,8 @@ with or without a *-t prefix* option, and with or without a *-p tmpdir* option.
 | 19   | TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix                   | $FALLBACK_DIR/my_prefix.WiVEiziQt9                                 |
 | 20   | TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix my_template.XXX   | $FALLBACK_DIR/my_prefix.eKNRL05mhO my_template.fXl                 |
 
-Notes:
+While the presented test set sufficiently reveal behavior of mktemp, more test cases were run for the revie of the man page.
 
-- Variables *TEST_TEMP_DIR* and *FALLBACK_DIR* represent paths to existing directories.
-- Paths to the created temporary files in the Result column are separated by space.
 
 
 ## Man Page Review
@@ -65,7 +75,10 @@ Notes:
      mktemp [-d] [-p tmpdir] [-q] [-u] -t prefix
 ```
 
-These invocation forms are both wrong and contradictory. Template argument is never mandatory, -t prefix is always optional, as the tests reveal.
+In the first form the template argument is not mandatory.
+The second form with a guaranteed use -t prefix does still allow the use of
+one or more template arguments which makes it identical to the first form and thus redundant.
+
 The user would be much better served by:
 ```
      mktemp [-dqu] [-p tmpdir] [-t prefix] [template ...]
@@ -86,13 +99,19 @@ file name with some number of ‘Xs’ appended to it, for example
 /tmp/temp.XXXX.
 ```
 Again, we are talking file paths here, not file names.
+The description is overly strict. 
+The template may be any file path. There is no need to attach any number of Xs.
+In such case no portion of such template will be overwritten and it will suffice for exactly one such file existing at a given time.
 
 ```
 The trailing ‘Xs’ are replaced with the current process
 number and/or a unique letter combination.
 ```
 
-Not exactly "a unique letter combination". I wish it said "a combination of alphanumeric characters (alnum in re_format(7))".
+I don't know about other platforms but on FreeBSD 14 I don't get any process number in the file name.
+This is no problem because of the "and/or" conjunction.
+But the "unique letter combination" in not exactly a letter combination.
+It should say "a combination of alphanumeric characters (alnum in re_format(7))".
 
 ```
 If the -t prefix option is given, mktemp will generate a template string
@@ -102,13 +121,12 @@ environment variable is not set.  Finally, /tmp will be used if neither
 TMPDIR or -p are set and used. [...]
 ```
 
-Apart from how difficult to read this is, it suggests that it makes only senst to use `[-p tmpdir]` in
+This suggests that it makes only sense to use `[-p tmpdir]` in
 conjunction with the `[-t prefix]` option as a fallback in case TMPDIR is not set. As if `[-t prefix [-p tmpdir]]` was in the synopsis.
 This is not the case and mktemp happily accepts the *-p* option alone.
 
-The *-p* option, is not any kind of fallback. With it, mktemp simply ignores whether
-the TMPDIR environment variable is set or not and tries to create the temporary files in the
-tmpdir set by the -p option.
+The *-p* option is not any kind of fallback. With it, mktemp simply ignores whether
+the TMPDIR environment variable is set or not and tries to interpret the given templates as paths relative to the tmpdir set by the -p option.
 That is, unless we also use the -t option and at least one template argument (see testcases 10, 20)
 
 Instead of such details, all that the description needs to say here (but does not say!) is this:
@@ -151,8 +169,8 @@ A much better wording would be:
 
 ```
 Any number of temporary files may be created in a single invocation according to the
-supplied path templates ([template ...]). One generated path template
-can be added to the zero or more supplied ones with the -t prefix option (see the -t option description for details).
+supplied path templates ([template ...]). Optionally, one extra path template
+can be automatically generated and added to the zero or more supplied ones with the -t prefix option (see the -t option description for details).
 ```
 
 I have no issues with the last paragraph ("The mktemp utility is provided ...").
