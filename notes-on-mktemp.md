@@ -223,63 +223,10 @@ It is a file path template, and it should mention five more things:
 - it claims the -p tmpdir for the generated template only and stops the -p tmpdir to have an effect on the provided templates (bug?)
 
 
-## Appendix: How I Struggled to Understand the Manual
+## Findings
 
-For what it's worth, here I will give you an insight into my thoughts at the time when I was reading the mktemp(1) page.
-I had a very unclear and different picture of mktemp until I had used it and until I ran my exploratory tests.
-Then I re-read the man page multiple times over and over and I realized that much of the man page
-can indeed be understood in a way that is commensurate with my test results.
-I was just very suprised that I never thought about understanding it that way. Not even close.
+Here is a summary of my findings. It is things that should be corrected in the manual page, or possibly in the mkdir program itself.
+But I understand that is quite impossible to change anything about mktemp's workings because the number of scripts which depend on its
+current behavior is probably very high.
 
-### Synopsis
-
-```
-     mktemp [-d] [-p tmpdir] [-q] [-t prefix] [-u] template ...
-     mktemp [-d] [-p tmpdir] [-q] [-u] -t prefix
-```
-
-The second invocation form is just like the first one, except that you don't use the template argument.
-So is the template argument mandatory? What's up with the different order of *-t prefix* and *-u*?
-
-
-### Description
-
-```
-The mktemp utility takes each of the given file name templates [...]
-```
-
-Having read the synopsis (I partly ignored for its confusing nature) and these introductory words,
-a firm undestanding was established in my mind that mktemp works (only!) with the sort of templates provided in the positional template argument.
-The handful of the slightest hints buried further in the text indicating that the -t prefix is a
-more convenient, if not the preferred way to provide a template simply could not enter my imagination anymore.
-
-```
-If the -t prefix option is given, mktemp will generate a template string
-based on the prefix and the TMPDIR environment variable if set.  If the
--p option is set, then the given tmpdir will be used if the TMPDIR
-environment variable is not set.  Finally, /tmp will be used if neither
-TMPDIR or -p are set and used. [...]
-```
-
-This is probably the part that is the hardest to read.
-And also it is either wrong or mktemp has a bug.
-
-Congratulate yourelf if you managed to distinguish the "tmpdir" option from the "TMPDIR" environment variable.
-
-```
-Any number of temporary files may be created in a single invocation,
-including one based on the internal template resulting from the -t flag.
-```
-
-- Intuitively I had expected that the -t prefix opion would somehow affect the templates
-provided as the template argument. That is not the case. And it hit me only after I started using
-and testing mktemp.
-- Third, having read and studied the mktemp man page very carefully, I was dead certain that
-mktemp would only produce as many files as you provide templates.
-A much clearer wording would have been:
-
-I find it most unfortunate that -t has been chosen for prefix and -p for tmpdir.
-
-### Options
-
-It is most peculiar that the short form -p requires a tmpdir argument, but the long form --tmpdir does not.
+- Synopsis should present only one invocation form
