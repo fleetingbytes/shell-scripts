@@ -13,7 +13,7 @@ It failed to make clear to me what each option does and what the exact result in
 invocation would be, especially when considering all the fallback scenarios.
 
 After a careful study of mktemp(1) I used mktemp in a few scripts
-but I become suspicious that something is not quite the way it should be.
+but I quickly became suspicious that something is not quite the way it should be.
 In the end I felt compelled to write some test cases and a script running them to explore what mktemp and its
 -t and -p options actually do. Then I checked if the results are in accordance with the mktemp man
 page.
@@ -57,7 +57,7 @@ Paths to the created temporary files in the result column are separated by space
 | 20   | TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix my_template.XXX   | $FALLBACK_DIR/my_prefix.eKNRL05mhO my_template.fXl                 |
 
 More test cases were run for the review of the manual page.
-The presented test set was reduce to sufficiently reveal the behavior of mktemp for the sake of the argument.
+The presented test set was reduced to sufficiently reveal the behavior of mktemp for the sake of the argument.
 
 
 ## Man Page Review
