@@ -10,7 +10,7 @@ It finds errors and imprecisions in the mktemp manual page and suggests appropri
 
 I find the manual page on mktemp very difficult to read.
 It failed to make clear to me what each option does and what the exact result in each
-invocation would be, especially when considering all the fallback scenarios.
+invocation would be, especially when considering various option and argument combinations, the fallback scenarios, and edge cases.
 
 After a careful study of mktemp(1) I used mktemp in a few scripts
 but I quickly became suspicious that something is not quite the way it should be.
@@ -98,6 +98,7 @@ And again, we are talking file paths here, not file names.
 The template may be any file path. There is no need to attach any number of Xs.
 In case of a template without trailing Xs, no portion will be overwritten and the template will suffice
 for exactly one such file existing at a given time.
+A template without trailing Xs is of course of little practical use, but mktemp allows it, so the manual could mention it.
 
 ```
 The trailing ‘Xs’ are replaced with the current process
