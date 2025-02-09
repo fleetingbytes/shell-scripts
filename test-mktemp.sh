@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/usr/bin/env sh
 
 # mktemp can be easily tested by just using the -u (--dry-run) option
 # in addition to all the arguments you would like to use.
