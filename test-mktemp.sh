@@ -1,51 +1,52 @@
 #!/bin/sh
 
-# I find it very difficult to read through the man page of mktemp.
-# It is not clear to me what each option does and what the exact result in each
-# invocation would be, especially when considering all the fallback scenarios.
+# mktemp can be easily tested by just using the -u (--dry-run) option
+# in addition to all the arguments you would like to use.
 #
-# I decided to test each possibility manually. Until I got annoyed by the need
-# to delete all the temp files created when testing. So I wrote a script for it.
+# I wrote this script just to be sure to test and observe the 
+# actual behavior under real circumstances without the need to
+# manually delete the files created.
 #
 # It produces a report file with each tested invocation and the corresponding
 # result. It deletes all the temp files created in the process. Even the report
 # file itself is deleted. Redirect the script output to a file if you want
 # a persistent record of the test run.
 
-INVOCATIONS=$(mktemp)
+prefix=$(basename "$0")
+INVOCATIONS=$(mktemp -t "$prefix")
 START_OF_LABEL="‹"
 END_OF_LABEL="›"
 FILE_LABEL="${START_OF_LABEL}f${END_OF_LABEL}"
 DIR_LABEL="${START_OF_LABEL}d${END_OF_LABEL}"
 FALLBACK_DIR="$HOME/fallback_dir"
 TEST_TEMP_DIR="$HOME/test_temp_dir"
-ABSOLUTE_PATH="/usr/local/test-temp"
-GENERATED_PATHS_FILE="$(mktemp)"
+ABSOLUTE_PATH="$HOME/absolute/path"
+GENERATED_PATHS_FILE="$(mktemp -t "${prefix}-report")"
 REPORT_FILE="mktemp-report"
 
 
 prepare_mktemp_invocations() {
-    #echo 'unset TMPDIR; mktemp' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp' >> "$INVOCATIONS"
     echo 'unset TMPDIR; mktemp my_template.XX my_template.XXX' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -t my_prefix' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -t my_prefix my_template.XX' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -t my_prefix my_template.XX my_template.XXX' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR my_template.XX' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR my_template.XX my_template.XXX' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR -t my_prefix' >> "$INVOCATIONS"
-    #echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR -t my_prefix my_template.XXX' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -t my_prefix' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -t my_prefix my_template.XX' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -t my_prefix my_template.XX my_template.XXX' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR my_template.XX' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR my_template.XX my_template.XXX' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR -t my_prefix' >> "$INVOCATIONS"
+    echo 'unset TMPDIR; mktemp -p $FALLBACK_DIR -t my_prefix my_template.XXX' >> "$INVOCATIONS"
 
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp' >> "$INVOCATIONS"
     echo 'TMPDIR=$TEST_TEMP_DIR mktemp my_template.XX my_template.XXX' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -t my_prefix' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -t my_prefix my_template.XX' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -t my_prefix my_template.XX my_template.XXX' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR my_template.XX' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR my_template.XX my_template.XXX' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix' >> "$INVOCATIONS"
-    #echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix my_template.XXX' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -t my_prefix' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -t my_prefix my_template.XX' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -t my_prefix my_template.XX my_template.XXX' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR my_template.XX' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR my_template.XX my_template.XXX' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix' >> "$INVOCATIONS"
+    echo 'TMPDIR=$TEST_TEMP_DIR mktemp -p $FALLBACK_DIR -t my_prefix my_template.XXX' >> "$INVOCATIONS"
 
     #echo 'unset TMPDIR; mktemp $ABSOLUTE_PATH/my_template.XX' >> "$INVOCATIONS"
     #echo 'unset TMPDIR; mktemp -t $ABSOLUTE_PATH/my_prefix' >> "$INVOCATIONS"
@@ -73,19 +74,13 @@ prepare_mktemp_invocations() {
 }
 
 create_test_dirs() {
-    mkdir -p "$FALLBACK_DIR" "$TEST_TEMP_DIR"
-    mkdir -p "/tmp${ABSOLUTE_PATH}"
-    set -e
-    mkdir -p "$ABSOLUTE_PATH"
-    set +e
-    mkdir -p "${FALLBACK_DIR}${ABSOLUTE_PATH}"
-    mkdir -p "${TEST_TEMP_DIR}${ABSOLUTE_PATH}"
+    mkdir -p "$FALLBACK_DIR" "$TEST_TEMP_DIR" "$ABSOLUTE_PATH"
+    mkdir -p "${FALLBACK_DIR}${ABSOLUTE_PATH}" "${TEST_TEMP_DIR}${ABSOLUTE_PATH}" "/tmp${ABSOLUTE_PATH}"
 }
 
 cleanup() {
     rm -f "$INVOCATIONS" "$GENERATED_PATHS_FILE" "$REPORT_FILE"
-    rm "$ABSOLUTE_PATH/*" 2>/dev/null
-    rm -rf "$FALLBACK_DIR" "$TEST_TEMP_DIR" "/tmp${ABSOLUTE_PATH}"
+    rm -rf "$FALLBACK_DIR" "$TEST_TEMP_DIR" "$ABSOLUTE_PATH" "/tmp${ABSOLUTE_PATH}"
 }
 
 execute_invocations_and_write_report() {
