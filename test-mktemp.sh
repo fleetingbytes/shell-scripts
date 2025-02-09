@@ -84,6 +84,7 @@ cleanup() {
 }
 
 execute_invocations_and_write_report() {
+    local invocation
     while read invocation; do
         printf "%s ==> " "$invocation" >> "$REPORT_FILE"
         eval "$invocation" '2>&1' "|" 'tee -a "$REPORT_FILE"' "|" 'grep --invert-match --fixed-strings "Permission denied"' "|" 'tee -a "$GENERATED_PATHS_FILE"' "|" "xargs rm"

@@ -60,7 +60,7 @@ More test cases were run for the review of the manual page.
 The presented test set was reduced to sufficiently reveal the behavior of mktemp for the sake of the argument.
 
 
-## Man Page Review
+## Manual Page Review
 
 ### Synopsis Section
 
@@ -69,7 +69,8 @@ The presented test set was reduced to sufficiently reveal the behavior of mktemp
      mktemp [-d] [-p tmpdir] [-q] [-u] -t prefix
 ```
 
-In the first form the template argument is not mandatory.
+Both invocation forms are wrong.
+In the first form the template arguments are not mandatory.
 The second form with a guaranteed -t prefix does still allow the use of
 one or more template arguments which makes it identical to the first form and thus redundant.
 
@@ -107,7 +108,7 @@ number and/or a unique letter combination.
 
 I don't know about other platforms but on FreeBSD 14 I don't get any process number in the file name.
 The formulation poses no problem because of the "and/or" conjunction
-but the "unique letter combination" is not exactly a letter combination (at least on FreeBSD 14).
+but the "unique letter combination" is not exactly a letter combination (at least on FreeBSD 14 it is not).
 It should say "a combination of alphanumeric characters (alnum in re_format(7))".
 
 ```
@@ -125,14 +126,14 @@ This is not the case and mktemp will happily accept the *-p* option alone.
 The *-p* option is not any kind of fallback. With it, mktemp simply ignores whether
 the TMPDIR environment variable is set or not and tries to interpret the given templates (or the generated template)
 as paths relative to the tmpdir set by the -p option.
-That is, unless we also use the -p option, the -t option, and at least one template argument (see test cases 10, 20)
+That is, unless we use the -p option, the -t option, and at least one template argument (see test cases 10, 20).
 
 Instead of such details, all that the description needs to say here (but does not say!) is this:
 
 ```
-Unless modified by the -t or -p options or the optional template argument,
-mktemp tries to use the default template `$TMPDIR/tmp.XXXXXXXXXX`,
-falling back to `/tmp/tmp.XXXXXXXXXX` if TMPDIR is not set.
+Unless modified by the -t or -p options or the optional template arguments,
+mktemp tries to use the default template "$TMPDIR/tmp.XXXXXXXXXX",
+falling back to "/tmp/tmp.XXXXXXXXXX" if TMPDIR is not set.
 ```
 
 This is much easier to read and in accordance with the actual behavior.
@@ -159,9 +160,9 @@ Any number of temporary files may be created in a single invocation,
 including one based on the internal template resulting from the -t flag.
 ```
 
-- It mentions some "internal template" but this term has not been introduced anywhere.
+It mentions some "internal template" but this term has not been introduced anywhere.
 Instead, the term "generated template" should be used.
-- -t is not a flag, it is an option.
+-t is not a flag, it is an option.
 
 A much better wording would be:
 
@@ -169,7 +170,7 @@ A much better wording would be:
 Any number of temporary files may be created in a single invocation
 according to the supplied path templates ([template ...]).
 Optionally, one extra path template can be automatically generated
-and added to the zero or more supplied ones with the -t prefix option
+with the -t prefix option and added to the zero or more supplied ones
 (see the -t option description for details).
 ```
 
@@ -204,7 +205,7 @@ All this can be written much more precisely:
 ```
 Interpret the provided templates or the generated temple as a path relative to tmpdir.
 If tmpdir is either empty or omitted, then the TMPDIR environment variable (or the default /tmp) will be used as the template's parent directory.
-If the -t option is provided, use tmpdir as path only for the generated template, not the template arguments.
+If the -t option is provided, use tmpdir as path only for the generated template, not the template arguments (known issue).
 ```
 
 #### -t prefix
@@ -229,7 +230,7 @@ And I would mention the last sentence also in a dedicated Bugs section.
 
 This is of course of no importance to the point I am making in this whole post,
 but I find it very unfortunate that *-p* is used for an option called "tmpdir" and *-t* is used for an option called "prefix".
-When reading I had to make conscious effort to prevent myself from associating the *prefix* option with *-p* and *tmpdir* with *-t*.
+While reading the manual page I had to make conscious effort to prevent myself from associating the *prefix* option with *-p* and *tmpdir* with *-t*.
 My vexation was even greater once I found that *--tmpdir* is the long form of *-p*. Good job, really.
 I understand that the letters used for the options were probably motivated by the words *p*ath and *t*emplate and that
 this cannot be changed anymore as it would break pretty much every script using mktemp.
