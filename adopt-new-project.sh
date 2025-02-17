@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 get_absolute_path_to_parent_dir_of_this_script() {
-    local absolute_path="$(stat -f "%R" -- "$1")"
+    local absolute_path="$(readlink -f -- "$1")"
     local parent_dir="$(dirname "$absolute_path")"
     printf "$parent_dir"
 }
