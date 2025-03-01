@@ -76,7 +76,7 @@ $script_name ~/src/new-project \\
   --deploy-keys-dir=~/path/to/deploy_keys \\
   --keepass-db=~/path/to/KeePassDB.kdbx \\
   --private \\
-  --push-keepass \\
+  --push-keepass-db \\
   --push-chezmoi \\
 EOF
 )
