@@ -50,6 +50,7 @@ DESCRIPTION
     - add this deploy key to your SSH agent
     - add this deploy key to the deploy keys group in KeePass
     - add this deploy key to your chezmoi dotfiles
+    - push the local commits of the project to its remote repository
 
 ARGUMENTS
     dir                    Path to the directory of the project.
@@ -69,6 +70,7 @@ FLAGS
     -p, --private          GitHub repository shall be private
     -K, --push-keepass     Commit and push the KeePass DB
     -C, --push-chezmoi     Commit and push the chezmoi dotfiles
+    -R, --push-repository  Push the adopted project to the remote
     -h, --help             Prints this help text
 
 Example:
@@ -115,7 +117,6 @@ parse_optional_positional_argument() {
         return 1
     fi
 }
-
 set_defaults() {
     PROJECT_DESCRIPTION=""
     DEPLOYMENT_KEYS_DIR=$DEFAULT_DEPLOYMENT_KEYS_DIR
@@ -123,6 +124,7 @@ set_defaults() {
     PRIVATE_GITHUB_REPOSITORY=""
     PUSH_KEEPASS_DB=""
     PUSH_CHEZMOI=""
+    PUSH_REPOSITORY=""
 }
 
 parse_cli() {
@@ -147,6 +149,7 @@ parse_cli() {
             p) PRIVATE_GITHUB_REPOSITORY=1 ;;
             K) PUSH_KEEPASS_DB=1 ;;
             C) PUSH_CHEZMOI=1 ;;
+            R) PUSH_REPOSITORY=1 ;;
             -)
                 case "${OPTARG}" in
                     name=*)
@@ -163,6 +166,8 @@ parse_cli() {
                         PUSH_KEEPASS_DB=1 ;;
                     push-chezmoi)
                         PUSH_CHEZMOI=1 ;;
+                    push-repository)
+                        PUSH_REPOSITORY=1 ;;
                     *)
                         echo "Unknown option --${OPTARG}" >&2
                         exit 1
@@ -213,3 +218,5 @@ unlock | create_deployment_key_entry "$repo_name" "$url" "$ssh_url"
 add_deployment_key_to_dotfiles $repo_name
 chezmoi_stage_deployment_key $repo_name
 [ $PUSH_CHEZMOI ] && chezmoi_commit_and_push
+
+[ $PUSH_REPOSITORY ] && push_local_repository_to_the_remote $PROJECT_DIR"

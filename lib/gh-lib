@@ -67,21 +67,3 @@ create_remote_repository() {
     printf "Create new %s GitHub repository\n" $kind
     gh repo create $project_name --$kind --description "$project_description"
 }
-
-remote_url_for_origin_already_exists() {
-    local project_dir=$1
-    git -C "$project_dir" remote | grep -q origin
-}
-
-add_remote_url() {
-    local project_dir=$1
-    local remote_url=$2
-    printf "Set remote URL ... "
-    if remote_url_for_origin_already_exists $project_dir; then
-        printf "origin already exists\n"
-    else
-        if git -C "$project_dir" remote add origin "$remote_url"; then
-            printf "Ok\n"
-        fi
-    fi
-}
