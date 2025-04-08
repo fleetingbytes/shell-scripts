@@ -219,4 +219,4 @@ add_deployment_key_to_dotfiles $repo_name
 chezmoi_stage_deployment_key $repo_name
 [ $PUSH_CHEZMOI ] && chezmoi_commit_and_push
 
-[ $PUSH_REPOSITORY ] && push_local_repository_to_the_remote $PROJECT_DIR"
+[ $PUSH_REPOSITORY ] && push_local_repository_to_the_remote "$PROJECT_DIR"
