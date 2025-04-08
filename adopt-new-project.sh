@@ -140,7 +140,7 @@ parse_cli() {
     fi
     PROJECT_NAME=$(basename $PROJECT_DIR)
 
-    while getopts ":n:d:s:k:pKC-:" opt; do
+    while getopts ":n:d:s:k:pKCR-:" opt; do
         case $opt in
             n) PROJECT_NAME=$OPTARG ;;
             d) PROJECT_DESCRIPTION=$OPTARG ;;
