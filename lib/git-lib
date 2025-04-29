@@ -49,7 +49,7 @@ get_default_branch_name() {
 
 push_local_repository_to_the_remote() {
     local directory=$1
-    if [ $(count_local_commits() "$directory") -ne 0 ]; then
+    if [ $(count_local_commits "$directory") -ne 0 ]; then
         printf "$CYAN%s$NORMAL\n" "Pushing local repository to the remote"
         defaut_branch=$(get_default_branch_name)
         git -C "$directory" push --set-upstream origin "$default_branch"
