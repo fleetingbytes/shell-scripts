@@ -68,7 +68,7 @@ OPTIONS
 
 FLAGS
     -p, --private          GitHub repository shall be private
-    -K, --push-keepass     Commit and push the KeePass DB
+    -K, --push-keepass-db  Commit and push the KeePass DB
     -C, --push-chezmoi     Commit and push the chezmoi dotfiles
     -R, --push-repository  Push the adopted project to the remote
     -h, --help             Prints this help text
