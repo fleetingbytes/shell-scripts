@@ -40,6 +40,10 @@ add_remote_url() {
 
 count_local_commits() {
     local directory=$1
+    if ! git -C "$directory" rev-parse HEAD > /dev/null 2>&1; then
+        echo "0"
+        return 0
+    fi
     git -C "$directory" rev-list --count HEAD
 }
 
