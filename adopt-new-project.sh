@@ -180,31 +180,12 @@ parse_cli() {
     done
 }
 
-exit_if_remote_has_changed() {
-    local repository
-    while read repository; do
-        if remote_has_changed "$repository"; then
-            printf "%s %s %s\n%s\n" "Detected changes in the" "$repository" "remote" "Script aborted"
-            exit 1
-        fi
-    done
-}
-
-exit_if_no_commits() {
-    local directory=$1
-    count=$(count_local_commits "$directory")
-    if [ $count -eq 0 ]; then
-        printf "%s %s\n%s\n" "No commits found in" "$directory" "Script aborted"
-        exit 1
-    fi
-}
-
 set_color_variables
 
 set_defaults
 parse_cli "$@"
 
-printf "%s\n" "$(dirname $KEEPASS_DB)" "$(chezmoi source-path)" | exit_if_remote_has_changed
+exit_if_remote_has_changed "$(dirname $KEEPASS_DB)" "$(chezmoi source-path)"
 exit_if_no_commits "$PROJECT_DIR"
 
 repo_name="$PROJECT_NAME"
@@ -213,6 +194,7 @@ create_remote_repository "$PROJECT_NAME" "$PROJECT_DESCRIPTION" "$PRIVATE_GITHUB
 IFS=" " read url ssh_url << EOF
 $(get_url_and_ssh_url "$repo_name")
 EOF
+exit_if_var_empty "$url" "$ssh_url"
 
 add_remote_url "$PROJECT_DIR" "$ssh_url"
 

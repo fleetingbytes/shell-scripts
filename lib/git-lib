@@ -61,3 +61,25 @@ push_local_repository_to_the_remote() {
         printf "$YELLOW%s$NORMAL\n" "Local repository has no commits yet, nothing to push"
     fi
 }
+
+exit_if_remote_has_changed() {
+    local repository
+    for repository; do
+        if remote_has_changed "$repository"; then
+            printf "%s %s %s\n%s\n" "Detected changes in the" "$repository" "remote" "Script aborted"
+            exit 1
+        else
+            printf "%s %s %s\n" "No changes in the" "$repository" "remote"
+        fi
+    done
+}
+
+exit_if_no_commits() {
+    local directory=$1
+    count=$(count_local_commits "$directory")
+    if [ $count -eq 0 ]; then
+        printf "%s %s\n%s\n" "No commits found in" "$directory" "Script aborted"
+        exit 1
+    fi
+}
+

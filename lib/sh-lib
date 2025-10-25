@@ -18,3 +18,13 @@ set_color_variables() {
         printf "WARNING: tput not found, not using colors.\n"
     fi
 }
+
+exit_if_var_empty() {
+    local var
+    for var; do
+        if [ -z "$var" ]; then
+            printf "Variable undefined\n"
+            exit 1
+        fi
+    done
+}

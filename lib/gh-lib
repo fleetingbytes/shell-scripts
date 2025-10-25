@@ -64,6 +64,6 @@ create_remote_repository() {
     local project_description=$2
     local private=$3
     [ $private ] && local kind="private" || local kind="public"
-    printf "Create new %s GitHub repository\n" $kind
+    printf "%s %s %s\n" "Creating new" "$kind" "GitHub repository"
     gh repo create $project_name --$kind --description "$project_description"
 }
