@@ -149,7 +149,6 @@ set_defaults
 parse_cli "$@"
 
 exit_if_remote_has_changed "$(dirname $KEEPASS_DB)" "$(chezmoi source-path)"
-exit_if_no_commits "$PROJECT_DIR"
 
 
 fork_name="$PROJECT_NAME"
