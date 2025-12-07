@@ -1,0 +1,33 @@
+# source functions from libraries
+. "${LIB_DIR}/sh-lib"
+. "${LIB_DIR}/check-lib"
+. "${LIB_DIR}/cargo-lib"
+
+
+GITHUB_HOST="github.com"
+REPO_API="https://api.$GITHUB_HOST/repos"
+ASTRAL_OWNER="astral-sh"
+ASTRAL_API="$REPO_API/$ASTRAL_OWNER"
+ASTRAL_GITHUB="https://$GITHUB_HOST/$ASTRAL_OWNER"
+
+available_astral_tool_version() {
+    local tool=$1
+    local available_tool_version=$(curl -Ls "$ASTRAL_API/$tool/releases?page=1" | jq -r ".[0].tag_name")
+    printf "%s" ${available_tool_version#v}
+}
+
+exit_if_astral_tool_is_up_to_date() {
+    local tool=$1
+    available=$(available_astral_tool_version "$tool")
+    installed=$(cargo_installed_version "$tool")
+    if [ "$available" = "$installed" ]; then
+        printf "%s\n" "$tool $installed is up to date"
+        exit 0
+    fi
+}
+
+install_astral_tool() {
+    local tool=$1
+    cargo install --quiet --git "$ASTRAL_GITHUB/$tool" "$tool"
+}
+

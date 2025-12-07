@@ -1,0 +1,15 @@
+check() {
+    need_install=0
+    set_color_variables
+    for program do
+        if ! command -v -- "$program" > /dev/null 2>&1; then
+            printf "%s $RED%s$NORMAL\n" "$program" "MISSING!"
+            need_install=1
+        fi
+    done
+    if [ $need_install -ne 0 ]; then
+        exit $need_install
+    fi
+}
+
+

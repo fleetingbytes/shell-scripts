@@ -1,0 +1,5 @@
+cargo_installed_version() {
+    local crate=$1
+    local crate_version=$(cargo install --list | grep "^$crate" | cut -w -f2)
+    printf "%s" ${crate_version#v}
+}
