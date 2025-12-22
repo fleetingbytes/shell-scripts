@@ -28,3 +28,10 @@ exit_if_var_empty() {
         fi
     done
 }
+
+files_exist() {
+    local mask=$1
+    local directory=$2
+    find "$directory" -name "$mask" -type f -maxdepth 1 -print -quit 2>/dev/null | grep -q .
+}
+
