@@ -1,14 +1,31 @@
 #!/usr/bin/env sh
 
 # Core command to set Colemak-DH keyboard layout in X11
-use_colemak_layout() {
-    setxkbmap -model pc105 \
-              -layout us \
-              -variant colemak_dh \
-              caps:escape_shifted_capslock \
-              2>/dev/null || true
+switch_x11_layout() {
+    if [ "$layout" = "colemak" ]; then
+        setxkbmap -model pc105 \
+                  -layout us \
+                  -variant colemak_dh \
+                  caps:escape_shifted_capslock \
+                  2>/dev/null || true
+    else
+        setxkbmap -model pc105 \
+                  -layout us
+                  2>/dev/null || true
+    fi
     xset r rate 250 30
 }
+
+
+switch_vt_layout() {
+    echo "Setting virtual terminal keyboard layout" >&2
+    if [ "$layout" = "colemak" ]; then
+        kbdcontrol -r fast -l colemak-dh.iso.acc.kbd || true
+    else
+        kbdcontrol -r fast -l us.acc.kbd || true
+    fi
+}
+
 
 # Connect to X server and set keyboard layout
 set_x11_colemak() {
@@ -30,7 +47,7 @@ set_x11_colemak() {
     fi
 
     if command -v xdpyinfo >/dev/null 2>&1 && xdpyinfo >/dev/null 2>&1; then
-        echo "Setting Colemak-DH X11 layout for root user (DISPLAY=$DISPLAY)" >&2
+        echo "Setting X11 keyboard layout (DISPLAY=$DISPLAY)" >&2
         use_colemak_layout
         return 0
     else
@@ -39,19 +56,20 @@ set_x11_colemak() {
     fi
 }
 
-# Set keyboard layout to colemak
+# Set keyboard layout
+
+layout=$1
 case "$(tty 2>/dev/null)" in
     /dev/ttyv* | /dev/console | /dev/tty*)
-        # We are on a virtual console -> use kbdcontrol to switch layout
+        # We are on a virtual console
         if command -v kbdmap >/dev/null 2>&1; then
-            echo "Setting Colemak-DH console keymap for root user" >&2
-            kbdcontrol -r fast -l colemak-dh.iso.acc.kbd || true
+            switch_vt_layout
         fi
         ;;
     *)
         # We are not on a virtual console, this could be X11, SSH, tmux, etc.
         if command -v setxkbmap >/dev/null 2>&1; then
-            set_x11_colemak
+            switch_x11_layout
         fi
         ;;
 esac
