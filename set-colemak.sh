@@ -1,3 +1,5 @@
+#!/usr/bin/env sh
+
 # Core command to set Colemak-DH keyboard layout in X11
 use_colemak_layout() {
     setxkbmap -model pc105 \
