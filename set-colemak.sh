@@ -1,60 +1,3 @@
-#
-# .shrc - bourne shell startup file 
-#
-# This file will be used if the shell is invoked for interactive use and
-# the environment variable ENV is set to this file.
-#
-# see also sh(1), environ(7).
-#
-
-
-# file permissions: rwxr-xr-x
-#
-# umask	022
-
-# Uncomment this to enable the builtin vi(1) command line editor in sh(1),
-# e.g. ESC to go into visual mode.
-# set -o vi
-
-
-# # some useful aliases
-# alias h='fc -l'
-# alias j=jobs
-# alias m="$PAGER"
-# alias ll='ls -laFo'
-# alias l='ls -l'
-# alias g='egrep -i'
- 
-# # be paranoid
-# alias cp='cp -ip'
-# alias mv='mv -i'
-# alias rm='rm -i'
-
-# # csh like history on arrow up and down
-bind ^[[A ed-search-prev-history
-bind ^[[B ed-search-next-history
-
-# # Ctrl+right arrow: go to the next word
-# # Ctrl+left arrow: go to the previous word
-bind "\\e[1;5C" em-next-word
-bind "\\e[1;5D" ed-prev-word
-
-alias history='fc -l'
-
-# Fix home/del for mobaxterm
-bind ^[[5~ ed-move-to-beg
-bind ^[[6~ ed-move-to-end
-
-# read(2) of directories may not be desirable by default, as this will provoke
-# EISDIR errors from each directory encountered.
-# alias grep='grep -d skip'
-
-# set prompt: ``username@hostname:directory $ '' 
-PS1="\u@\h:\w \\$ "
-
-# search path for cd(1)
-# CDPATH=:$HOME
-
 # Core command to set Colemak-DH keyboard layout in X11
 use_colemak_layout() {
     setxkbmap -model pc105 \
@@ -65,7 +8,8 @@ use_colemak_layout() {
     xset r rate 250 30
 }
 
-setup_x11_keyboard() {
+# Connect to X server and set keyboard layout
+set_x11_colemak() {
     real_user=$(logname 2>/dev/null || echo "${SUDO_USER:-}")
 
     if [ -z "$real_user" ] || [ "$real_user" = "root" ]; then
@@ -96,17 +40,16 @@ setup_x11_keyboard() {
 # Set keyboard layout to colemak
 case "$(tty 2>/dev/null)" in
     /dev/ttyv* | /dev/console | /dev/tty*)
-        # We are on a FreeBSD virtual console -> use kbdmap to switch layout
+        # We are on a virtual console -> use kbdcontrol to switch layout
         if command -v kbdmap >/dev/null 2>&1; then
             echo "Setting Colemak-DH console keymap for root user" >&2
-            kbdmap colemak-dh.iso.acc.kbd 2>/dev/null || true
-            kbdcontrol -r fast
+            kbdcontrol -r fast -l colemak-dh.iso.acc.kbd || true
         fi
         ;;
     *)
         # We are not on a virtual console, this could be X11, SSH, tmux, etc.
         if command -v setxkbmap >/dev/null 2>&1; then
-            setup_x11_keyboard
+            set_x11_colemak
         fi
         ;;
 esac
