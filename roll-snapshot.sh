@@ -1,3 +1,5 @@
+#!/bin/sh
+
 dataset=$1
 
 if [ -z "$dataset" ]; then
