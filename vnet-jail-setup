@@ -1,0 +1,11 @@
+#!/bin/sh
+
+bridge="$1"
+jail_id="$2"
+jail_name="$3"
+
+epair="epair${jail_id}"
+
+/sbin/ifconfig ${epair} create up
+/sbin/ifconfig ${epair}a up descr "jail:${jail_name}"
+/sbin/ifconfig ${bridge} addm ${epair}a up
