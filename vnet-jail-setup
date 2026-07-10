@@ -1,11 +1,19 @@
 #!/bin/sh
 
 bridge="$1"
-jail_id="$2"
-jail_name="$3"
+epair_part="$2"
+mac_part="$3"
+jail_name="$4"
 
-epair="epair${jail_id}"
+epair_descr="jail:${jail_name}"
 
-/sbin/ifconfig ${epair} create up
-/sbin/ifconfig ${epair}a up descr "jail:${jail_name}"
-/sbin/ifconfig ${bridge} addm ${epair}a up
+host_interface="${epair_part}a"
+host_mac="${mac_part}a"
+
+jail_interface="${epair_part}b"
+jail_mac="${mac_part}b"
+
+/sbin/ifconfig ${epair_part} create ether ${host_mac}
+/sbin/ifconfig ${jail_interface} ether ${jail_mac} descr "$epair_descr"
+/sbin/ifconfig ${host_interface} up descr "$epair_descr"
+/sbin/ifconfig ${bridge} addm ${host_interface} up

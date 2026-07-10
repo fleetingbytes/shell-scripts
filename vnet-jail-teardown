@@ -1,9 +1,7 @@
 #!/bin/sh
 
 bridge="$1"
-jail_id="$2"
+host_interface="$2"
 
-epair="epair${jail_id}"
-
-/sbin/ifconfig ${bridge} deletem ${epair}a
-/sbin/ifconfig ${epair}a destroy
+/sbin/ifconfig ${bridge} deletem ${host_interface}
+/sbin/ifconfig ${host_interface} destroy
