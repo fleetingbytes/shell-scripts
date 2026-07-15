@@ -30,3 +30,15 @@ create_deployment_key_entry() {
     add_deployment_key_entry_for_repo "$repo_name" "$url" "$ssh_url"
     attach_deployment_keypair_for_repo "$repo_name"
 }
+
+with_admin_identity() {
+    local path_to_entry="/Home/SSH/Admin identity"
+    [ $QUIET_KEEPASS_CLI ] && local quiet="--quiet" || local quiet=""
+    unlock | keepassxc-cli show "$quiet" --show-protected --attributes "password" "$KEEPASS_DB" "${path_to_entry}"
+}
+
+with_admin_recipient() {
+    local path_to_entry="/Home/SSH/Admin identity"
+    [ $QUIET_KEEPASS_CLI ] && local quiet="--quiet" || local quiet=""
+    unlock | keepassxc-cli show "$quiet" --attributes "recipient" "$KEEPASS_DB" "${path_to_entry}"
+}

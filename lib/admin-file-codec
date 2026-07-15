@@ -1,0 +1,10 @@
+decrypt_file() {
+    local file=$1
+    age --decrypt --identity - "$file"
+}
+
+encrypt_file() {
+    local file=$1
+    local out=$2
+    age --recipients-file - --output "$out" "$file"
+}
